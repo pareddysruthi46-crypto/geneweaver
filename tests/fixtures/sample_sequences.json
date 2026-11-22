@@ -1,0 +1,15 @@
+﻿{
+  "valid_sequences": [
+    "ATGCGTAC",
+    "GATTACA",
+    "CCGGAATT"
+  ],
+  "invalid_sequences": [
+    "ATGCXYZ",
+    "12345",
+    "ATG-NN"
+  ],
+  "empty_sequence": "",
+  "sample_guide": "ATGCGTAC",
+  "sample_target": "TACGCATG"
+}
