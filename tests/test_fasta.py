@@ -1,8 +1,11 @@
-﻿import tempfile
+import tempfile
 import unittest
 from pathlib import Path
 
 from alignment.fasta import parse_fasta, read_fasta
+
+
+FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
 class TestFastaParser(unittest.TestCase):
@@ -31,9 +34,7 @@ class TestFastaParser(unittest.TestCase):
         self.assertEqual(records[0].sequence, "ATGCGATT")
 
     def test_sequence_is_converted_to_uppercase(self):
-        content = ">gene1\natgc"
-        records = parse_fasta(content)
-
+        records = parse_fasta(">gene1\natgc")
         self.assertEqual(records[0].sequence, "ATGC")
 
     def test_invalid_dna_character_is_rejected(self):
@@ -66,6 +67,34 @@ class TestFastaParser(unittest.TestCase):
             self.assertEqual(records[0].record_id, "gene1")
             self.assertEqual(records[0].sequence, "ATGC")
             self.assertEqual(records[1].sequence, "GATTACA")
+
+    def test_valid_fasta_fixture(self):
+        records = read_fasta(FIXTURES_DIR / "valid.fasta")
+
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0].record_id, "valid_001")
+        self.assertEqual(records[0].sequence, "ATGCGTACGTAG")
+
+    def test_empty_fasta_fixture(self):
+        with self.assertRaises(ValueError):
+            read_fasta(FIXTURES_DIR / "empty.fasta")
+
+    def test_malformed_fasta_fixture(self):
+        with self.assertRaises(ValueError):
+            read_fasta(FIXTURES_DIR / "malformed.fasta")
+
+    def test_multi_record_fasta_fixture(self):
+        records = read_fasta(FIXTURES_DIR / "multi_record.fasta")
+
+        self.assertEqual(len(records), 3)
+        self.assertEqual(
+            [record.record_id for record in records],
+            ["record_001", "record_002", "record_003"]
+        )
+        self.assertEqual(
+            [record.sequence for record in records],
+            ["ATGCGTAC", "TTGCAAGT", "GGCCTTAA"]
+        )
 
 
 if __name__ == "__main__":
