@@ -1,4 +1,4 @@
-﻿# GeneWeaver Test Plan
+# GeneWeaver Test Plan
 
 ## 1. Purpose
 This document defines the initial testing strategy for GeneWeaver, a Python application for DNA guide and target sequence processing.
@@ -34,3 +34,12 @@ Run all tests using:
 
 ## 6. Scope Notes
 These are initial acceptance criteria. Features not yet implemented should be marked as pending rather than treated as passing.
+
+## 7. FASTA Input Tests
+- Parse a single FASTA record.
+- Parse multiple FASTA records.
+- Support sequences split across multiple lines.
+- Convert lowercase DNA characters to uppercase.
+- Read records directly from a FASTA file.
+- Reject missing headers and empty sequences.
+- Reject characters outside A, T, G, and C.
