@@ -57,3 +57,17 @@ The application must support CPU execution without requiring a GPU.
 The current development environment has Intel integrated graphics and Numba installed.
 GPU acceleration has not yet been verified. The application should use CPU execution
 as its reliable fallback until a compatible GPU backend is configured and tested.
+
+## 7. GPU Detection Script
+
+- Detection script: `gpu/detect_gpu.py`
+- Successfully detects Intel Iris Xe Graphics using Windows system information.
+- NVIDIA check reports that `nvidia-smi` is unavailable.
+- Checks for Numba, PyTorch, CuPy, and PyOpenCL availability.
+- Current result: No GPU acceleration library is configured.
+
+## 8. Additional Library Evaluation
+
+- PyOpenCL is not installed.
+- PyOpenCL may be evaluated for Intel GPU support if a compatible OpenCL runtime is available.
+- See `docs/GPU_LIBRARY_COMPARISON.md` for the library comparison and recommendations.
