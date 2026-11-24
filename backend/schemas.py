@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from alignment.models import AlignmentResult
+from backend.errors import ErrorDetail
 
 
 @dataclass
@@ -23,6 +24,7 @@ class AnalysisResponse:
     result: Optional[AlignmentResult] = None
     errors: list[str] = field(default_factory=list)
     request_id: Optional[str] = None
+    error_details: list[ErrorDetail] = field(default_factory=list)
 
 
 @dataclass
