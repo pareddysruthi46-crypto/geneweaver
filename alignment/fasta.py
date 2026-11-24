@@ -1,5 +1,7 @@
-﻿from dataclasses import dataclass
+from dataclasses import dataclass
 from pathlib import Path
+
+from alignment.validation import validate_dna_sequence
 
 
 @dataclass
@@ -23,12 +25,7 @@ def parse_fasta(content: str) -> list[FastaRecord]:
         if current_id is None:
             return
 
-        sequence = "".join(sequence_parts).upper()
-
-        if not sequence:
-            raise ValueError(
-                f"FASTA record '{current_id}' has an empty sequence."
-            )
+        sequence = validate_dna_sequence("".join(sequence_parts))
 
         records.append(
             FastaRecord(
@@ -67,17 +64,7 @@ def parse_fasta(content: str) -> list[FastaRecord]:
                     f"Sequence found before FASTA header at line {line_number}."
                 )
 
-            sequence_line = "".join(line.split()).upper()
-
-            invalid = set(sequence_line) - set("ATGC")
-
-            if invalid:
-                raise ValueError(
-                    f"Invalid DNA character(s) at line {line_number}: "
-                    f"{', '.join(sorted(invalid))}"
-                )
-
-            sequence_parts.append(sequence_line)
+            sequence_parts.append(line)
 
     save_record()
 
