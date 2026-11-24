@@ -99,3 +99,21 @@ class TestFastaParser(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+    def test_empty_header_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "Missing FASTA header"):
+            parse_fasta(">\nATGC")
+
+    def test_record_without_sequence_is_rejected(self):
+        with self.assertRaises(ValueError):
+            parse_fasta(">gene1\n")
+
+    def test_invalid_base_in_second_record_is_rejected(self):
+        content = ">gene1\nATGC\n>gene2\nATGX"
+        with self.assertRaisesRegex(ValueError, "Invalid DNA symbol"):
+            parse_fasta(content)
+
+    def test_header_without_description(self):
+        records = parse_fasta(">gene1\nATGC")
+        self.assertEqual(records[0].record_id, "gene1")
+        self.assertEqual(records[0].description, "")
