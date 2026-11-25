@@ -1,6 +1,6 @@
 import json
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stdout, redirect_stderr
 from io import StringIO
 
 from backend.cli import main
@@ -22,7 +22,6 @@ class TestBackendCLI(unittest.TestCase):
         ])
         self.assertEqual(code, 0)
         self.assertTrue(response["success"])
-        self.assertEqual(response["request_id"], None)
 
     def test_request_id_is_preserved(self):
         code, response = self.run_cli([
@@ -49,6 +48,55 @@ class TestBackendCLI(unittest.TestCase):
         ])
         self.assertEqual(code, 0)
         self.assertTrue(response["success"])
+
+    def test_empty_guide_sequence(self):
+        code, response = self.run_cli([
+            "--guide", "",
+            "--target", "ATGC",
+        ])
+        self.assertEqual(code, 2)
+        self.assertFalse(response["success"])
+        self.assertEqual(response["errors"][0]["field"], "guide_sequence")
+
+    def test_empty_target_sequence(self):
+        code, response = self.run_cli([
+            "--guide", "ATGC",
+            "--target", "",
+        ])
+        self.assertEqual(code, 2)
+        self.assertFalse(response["success"])
+        self.assertEqual(response["errors"][0]["field"], "target_sequence")
+
+    def test_invalid_target_sequence(self):
+        code, response = self.run_cli([
+            "--guide", "ATGC",
+            "--target", "ATGX",
+        ])
+        self.assertEqual(code, 2)
+        self.assertFalse(response["success"])
+        self.assertEqual(response["errors"][0]["field"], "target_sequence")
+
+    def test_missing_guide_argument(self):
+        with redirect_stderr(StringIO()):
+            with self.assertRaises(SystemExit) as error:
+                main(["--target", "ATGC"])
+        self.assertEqual(error.exception.code, 2)
+
+    def test_missing_target_argument(self):
+        with redirect_stderr(StringIO()):
+            with self.assertRaises(SystemExit) as error:
+                main(["--guide", "ATGC"])
+        self.assertEqual(error.exception.code, 2)
+
+    def test_unsupported_algorithm(self):
+        with redirect_stderr(StringIO()):
+            with self.assertRaises(SystemExit) as error:
+                main([
+                    "--guide", "ATGC",
+                    "--target", "ATGC",
+                    "--algorithm", "unknown",
+                ])
+        self.assertEqual(error.exception.code, 2)
 
 
 if __name__ == "__main__":

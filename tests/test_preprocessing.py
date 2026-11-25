@@ -24,6 +24,14 @@ class TestGuidePreprocessing(unittest.TestCase):
         with self.assertRaises(ValueError):
             preprocess_guide_sequence("ATGX")
 
+    def test_empty_guide_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "cannot be empty"):
+            preprocess_guide_sequence("")
+
+    def test_whitespace_only_guide_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "cannot be empty"):
+            preprocess_guide_sequence("   ")
+
 
 class TestTargetPreprocessing(unittest.TestCase):
 
@@ -42,6 +50,14 @@ class TestTargetPreprocessing(unittest.TestCase):
     def test_invalid_target_is_rejected(self):
         with self.assertRaises(ValueError):
             preprocess_target_sequence("ATGX")
+
+    def test_empty_target_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "cannot be empty"):
+            preprocess_target_sequence("")
+
+    def test_non_string_target_is_rejected(self):
+        with self.assertRaises(TypeError):
+            preprocess_target_sequence(None)
 
 
 if __name__ == "__main__":
