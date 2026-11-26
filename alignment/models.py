@@ -15,6 +15,8 @@ class AlignmentResult:
     aligned_guide: Optional[str] = None
     aligned_target: Optional[str] = None
     score: Optional[float] = None
+    start_position: Optional[int] = None
+    mismatches: Optional[int] = None
 
 
 @dataclass
