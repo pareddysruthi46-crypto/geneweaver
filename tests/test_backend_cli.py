@@ -16,12 +16,38 @@ class TestBackendCLI(unittest.TestCase):
 
     def test_valid_sequences(self):
         code, response = self.run_cli([
-            "--guide", "atgc",
+            "--guide", "ATGC",
             "--target", "ATGCGG",
             "--algorithm", "global",
         ])
         self.assertEqual(code, 0)
         self.assertTrue(response["success"])
+        self.assertEqual(
+            response["message"],
+            "Sequence alignment completed successfully.",
+        )
+
+    def test_alignment_result_is_returned(self):
+        code, response = self.run_cli([
+            "--guide", "ATGC",
+            "--target", "GGATGCTT",
+        ])
+        self.assertEqual(code, 0)
+        result = response["result"]
+        self.assertEqual(result["aligned_guide"], "ATGC")
+        self.assertEqual(result["aligned_target"], "ATGC")
+        self.assertEqual(result["score"], 100.0)
+        self.assertEqual(result["start_position"], 2)
+        self.assertEqual(result["mismatches"], 0)
+
+    def test_alignment_result_with_mismatches(self):
+        code, response = self.run_cli([
+            "--guide", "ATGC",
+            "--target", "ATGA",
+        ])
+        self.assertEqual(code, 0)
+        self.assertEqual(response["result"]["mismatches"], 1)
+        self.assertEqual(response["result"]["score"], 75.0)
 
     def test_request_id_is_preserved(self):
         code, response = self.run_cli([
@@ -48,6 +74,7 @@ class TestBackendCLI(unittest.TestCase):
         ])
         self.assertEqual(code, 0)
         self.assertTrue(response["success"])
+        self.assertEqual(response["result"]["aligned_guide"], "ATGC")
 
     def test_empty_guide_sequence(self):
         code, response = self.run_cli([
@@ -75,6 +102,15 @@ class TestBackendCLI(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertFalse(response["success"])
         self.assertEqual(response["errors"][0]["field"], "target_sequence")
+
+    def test_guide_longer_than_target_returns_alignment_error(self):
+        code, response = self.run_cli([
+            "--guide", "ATGCG",
+            "--target", "ATGC",
+        ])
+        self.assertEqual(code, 2)
+        self.assertFalse(response["success"])
+        self.assertEqual(response["errors"][0]["code"], "ALIGNMENT_ERROR")
 
     def test_missing_guide_argument(self):
         with redirect_stderr(StringIO()):

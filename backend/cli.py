@@ -4,7 +4,12 @@ import argparse
 import json
 from dataclasses import asdict
 
-from backend.errors import ErrorResponse, RequestValidationError
+from alignment.baseline import match_guide_to_target
+from backend.errors import (
+    ErrorDetail,
+    ErrorResponse,
+    RequestValidationError,
+)
 from backend.schemas import AnalysisRequest, AnalysisResponse, AppConfig
 from backend.validation import validate_analysis_request
 
@@ -29,7 +34,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv=None) -> int:
-    """Validate CLI input and print a structured JSON response."""
+    """Validate input, run alignment and print a JSON response."""
 
     args = build_parser().parse_args(argv)
 
@@ -43,9 +48,15 @@ def main(argv=None) -> int:
     try:
         validated_request = validate_analysis_request(request, AppConfig())
 
+        result = match_guide_to_target(
+            validated_request.guide_sequence,
+            validated_request.target_sequence,
+        )
+
         response = AnalysisResponse(
             success=True,
-            message="Input sequences accepted and validated successfully.",
+            message="Sequence alignment completed successfully.",
+            result=result,
             request_id=validated_request.request_id,
         )
         print(json.dumps(asdict(response), indent=2))
@@ -55,6 +66,21 @@ def main(argv=None) -> int:
         response = ErrorResponse(
             message="Request validation failed.",
             errors=exc.errors,
+            request_id=request.request_id,
+        )
+        print(json.dumps(asdict(response), indent=2))
+        return 2
+
+    except ValueError as exc:
+        response = ErrorResponse(
+            message="Sequence alignment failed.",
+            errors=[
+                ErrorDetail(
+                    code="ALIGNMENT_ERROR",
+                    message=str(exc),
+                    field="guide_sequence",
+                )
+            ],
             request_id=request.request_id,
         )
         print(json.dumps(asdict(response), indent=2))
