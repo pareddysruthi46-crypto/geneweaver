@@ -22,6 +22,33 @@ class TestBaselineMatching(unittest.TestCase):
         self.assertEqual(result.start_position, 4)
         self.assertEqual(result.mismatches, 1)
 
+    def test_no_matching_bases(self):
+        result = match_guide_to_target("AAAA", "TTTT")
+
+        self.assertEqual(result.aligned_guide, "AAAA")
+        self.assertEqual(result.aligned_target, "TTTT")
+        self.assertEqual(result.score, 0.0)
+        self.assertEqual(result.start_position, 0)
+        self.assertEqual(result.mismatches, 4)
+
+    def test_short_sequence_exact_match(self):
+        result = match_guide_to_target("A", "TAC")
+
+        self.assertEqual(result.aligned_guide, "A")
+        self.assertEqual(result.aligned_target, "A")
+        self.assertEqual(result.score, 100.0)
+        self.assertEqual(result.start_position, 1)
+        self.assertEqual(result.mismatches, 0)
+
+    def test_short_sequence_mismatch(self):
+        result = match_guide_to_target("A", "T")
+
+        self.assertEqual(result.aligned_guide, "A")
+        self.assertEqual(result.aligned_target, "T")
+        self.assertEqual(result.score, 0.0)
+        self.assertEqual(result.start_position, 0)
+        self.assertEqual(result.mismatches, 1)
+
     def test_lowercase_sequences_are_normalized(self):
         result = match_guide_to_target("atgc", "ttatgcaa")
 
