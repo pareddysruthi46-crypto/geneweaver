@@ -1,12 +1,4 @@
-"""Simple CPU baseline for guide-to-target sequence matching.
-
-Assumptions:
-- Input sequences contain only A, T, G and C.
-- Matching uses ungapped, fixed-length windows.
-- Each matching base contributes equally to the identity score.
-- The first window is selected when multiple windows share the best score.
-- The reported start_position is zero-based.
-"""
+"""Simple CPU baseline for guide-to-target sequence matching."""
 
 from alignment.models import AlignmentResult
 from alignment.validation import validate_dna_sequence
@@ -43,7 +35,15 @@ def match_guide_to_target(
 
     best_target = target[best_position:best_position + len(guide)]
     mismatches = len(guide) - best_matches
-    score = (best_matches / len(guide)) * 100
+    alignment_length = len(guide)
+    score = (best_matches / alignment_length) * 100
+    end_position = best_position + alignment_length - 1
+
+    summary = (
+        f"{best_matches} matches, {mismatches} mismatches "
+        f"over {alignment_length} bases; "
+        f"target positions {best_position}-{end_position}."
+    )
 
     return AlignmentResult(
         guide_sequence=guide,
@@ -52,5 +52,9 @@ def match_guide_to_target(
         aligned_target=best_target,
         score=score,
         start_position=best_position,
+        end_position=end_position,
+        matches=best_matches,
         mismatches=mismatches,
+        alignment_length=alignment_length,
+        summary=summary,
     )

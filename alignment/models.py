@@ -16,7 +16,11 @@ class AlignmentResult:
     aligned_target: Optional[str] = None
     score: Optional[float] = None
     start_position: Optional[int] = None
+    end_position: Optional[int] = None
+    matches: Optional[int] = None
     mismatches: Optional[int] = None
+    alignment_length: Optional[int] = None
+    summary: Optional[str] = None
 
 
 @dataclass
