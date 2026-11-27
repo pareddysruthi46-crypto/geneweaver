@@ -1,8 +1,6 @@
-"""Command-line entry point for GeneWeaver sequence analysis."""
+﻿"""Command-line entry point for GeneWeaver sequence analysis."""
 
 import argparse
-import json
-from dataclasses import asdict
 
 from alignment.baseline import match_guide_to_target
 from backend.errors import (
@@ -11,6 +9,7 @@ from backend.errors import (
     RequestValidationError,
 )
 from backend.schemas import AnalysisRequest, AnalysisResponse, AppConfig
+from backend.serialization import response_to_json
 from backend.validation import validate_analysis_request
 
 
@@ -59,7 +58,7 @@ def main(argv=None) -> int:
             result=result,
             request_id=validated_request.request_id,
         )
-        print(json.dumps(asdict(response), indent=2))
+        print(response_to_json(response))
         return 0
 
     except RequestValidationError as exc:
@@ -68,7 +67,7 @@ def main(argv=None) -> int:
             errors=exc.errors,
             request_id=request.request_id,
         )
-        print(json.dumps(asdict(response), indent=2))
+        print(response_to_json(response))
         return 2
 
     except ValueError as exc:
@@ -83,7 +82,7 @@ def main(argv=None) -> int:
             ],
             request_id=request.request_id,
         )
-        print(json.dumps(asdict(response), indent=2))
+        print(response_to_json(response))
         return 2
 
 
