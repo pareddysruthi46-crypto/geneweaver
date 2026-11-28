@@ -21,6 +21,10 @@ class AlignmentResult:
     mismatches: Optional[int] = None
     alignment_length: Optional[int] = None
     summary: Optional[str] = None
+    alignment_score: Optional[float] = None
+    match_score: Optional[float] = None
+    mismatch_score: Optional[float] = None
+    minimum_score: Optional[float] = None
 
 
 @dataclass
