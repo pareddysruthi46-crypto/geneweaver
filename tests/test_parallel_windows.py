@@ -1,9 +1,21 @@
 import unittest
+from unittest.mock import patch
 
-from gpu.parallel_windows import compare_sequence_windows
+from gpu.parallel_windows import (
+    compare_sequence_windows,
+    cpu_reference_scores,
+)
 
 
 class TestParallelSequenceWindows(unittest.TestCase):
+
+    def test_cpu_reference_scores(self):
+        scores = cpu_reference_scores("ATGC", "TTATGCAA")
+        self.assertEqual(scores, [1, 0, 4, 0, 0])
+
+    def test_cpu_reference_rejects_longer_guide(self):
+        with self.assertRaisesRegex(ValueError, "longer than target"):
+            cpu_reference_scores("ATGCG", "ATGC")
 
     def test_exact_match(self):
         result = compare_sequence_windows("ATGC", "TTATGCAA")
@@ -38,6 +50,28 @@ class TestParallelSequenceWindows(unittest.TestCase):
             or result["execution_device"].startswith("OpenCL GPU:")
         )
 
+    @patch("gpu.parallel_windows._opencl_scores")
+    def test_opencl_scores_match_cpu_reference(self, mock_opencl):
+        mock_opencl.return_value = ([1, 0, 4, 0, 0], "Test Device")
+
+        result = compare_sequence_windows(
+            "ATGC", "TTATGCAA", verify_reference=True
+        )
+
+        self.assertTrue(result["reference_verified"])
+        self.assertEqual(result["execution_device"], "OpenCL GPU: Test Device")
+
+    @patch("gpu.parallel_windows._opencl_scores")
+    def test_opencl_reference_mismatch_raises_error(self, mock_opencl):
+        mock_opencl.return_value = ([0, 0, 0, 0, 0], "Test Device")
+
+        with self.assertRaisesRegex(
+            RuntimeError, "do not match CPU reference scores"
+        ):
+            compare_sequence_windows(
+                "ATGC", "TTATGCAA", verify_reference=True
+            )
+
     def test_guide_longer_than_target(self):
         with self.assertRaisesRegex(ValueError, "longer than target"):
             compare_sequence_windows("ATGCG", "ATGC")
@@ -49,3 +83,4 @@ class TestParallelSequenceWindows(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

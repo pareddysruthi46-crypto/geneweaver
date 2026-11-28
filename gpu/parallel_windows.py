@@ -25,8 +25,16 @@ __kernel void compare_windows(
 """
 
 
-def _cpu_scores(guide, target):
-    """Calculate matching bases for every target window on CPU."""
+def cpu_reference_scores(guide_sequence, target_sequence):
+    """Return CPU reference scores for every fixed-length target window."""
+    guide = validate_dna_sequence(guide_sequence)
+    target = validate_dna_sequence(target_sequence)
+
+    if len(guide) > len(target):
+        raise ValueError(
+            "Guide sequence cannot be longer than target sequence."
+        )
+
     guide_length = len(guide)
     scores = []
 
@@ -37,6 +45,11 @@ def _cpu_scores(guide, target):
         )
 
     return scores
+
+
+def _cpu_scores(guide, target):
+    """Backward-compatible internal wrapper for CPU reference scoring."""
+    return cpu_reference_scores(guide, target)
 
 
 def _opencl_scores(guide, target):
@@ -93,9 +106,16 @@ def _opencl_scores(guide, target):
     return scores.tolist(), device.name
 
 
-def compare_sequence_windows(guide_sequence, target_sequence):
-    """Compare every fixed-length target window with a guide sequence."""
+def compare_sequence_windows(
+    guide_sequence,
+    target_sequence,
+    verify_reference=False,
+):
+    """Compare target windows, optionally checking OpenCL against CPU.
 
+    Set verify_reference=True to compare accelerated scores with the
+    independent CPU reference implementation.
+    """
     guide = validate_dna_sequence(guide_sequence)
     target = validate_dna_sequence(target_sequence)
 
@@ -105,12 +125,33 @@ def compare_sequence_windows(guide_sequence, target_sequence):
         )
 
     fallback_reason = None
+    reference_verified = None
 
     try:
         scores, device_name = _opencl_scores(guide, target)
         execution_device = f"OpenCL GPU: {device_name}"
+
+        if verify_reference:
+            reference_scores = cpu_reference_scores(guide, target)
+            if scores != reference_scores:
+                raise RuntimeError(
+                    "OpenCL scores do not match CPU reference scores: "
+                    f"OpenCL={scores}, CPU={reference_scores}"
+                )
+            reference_verified = True
+
+    except RuntimeError as exc:
+        # A verification mismatch must not silently fall back to CPU.
+        if str(exc).startswith(
+            "OpenCL scores do not match CPU reference scores:"
+        ):
+            raise
+        scores = cpu_reference_scores(guide, target)
+        execution_device = "CPU"
+        fallback_reason = str(exc)
+
     except Exception as exc:
-        scores = _cpu_scores(guide, target)
+        scores = cpu_reference_scores(guide, target)
         execution_device = "CPU"
         fallback_reason = str(exc)
 
@@ -131,4 +172,5 @@ def compare_sequence_windows(guide_sequence, target_sequence):
         "score": (best_matches / alignment_length) * 100,
         "execution_device": execution_device,
         "fallback_reason": fallback_reason,
+        "reference_verified": reference_verified,
     }
