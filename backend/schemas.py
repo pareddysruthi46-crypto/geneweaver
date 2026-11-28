@@ -13,6 +13,9 @@ class AnalysisRequest:
     target_sequence: str
     algorithm: str = "global"
     request_id: Optional[str] = None
+    match_score: Optional[float] = None
+    mismatch_score: Optional[float] = None
+    minimum_score: Optional[float] = None
 
 
 @dataclass
@@ -36,3 +39,6 @@ class AppConfig:
     debug: bool = False
     max_sequence_length: int = 10000
     default_algorithm: str = "global"
+    match_score: float = 1.0
+    mismatch_score: float = 0.0
+    minimum_score: Optional[float] = None

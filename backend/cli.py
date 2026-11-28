@@ -1,4 +1,4 @@
-﻿"""Command-line entry point for GeneWeaver sequence analysis."""
+"""Command-line entry point for GeneWeaver sequence analysis."""
 
 import argparse
 
@@ -16,6 +16,8 @@ from backend.validation import validate_analysis_request
 def build_parser() -> argparse.ArgumentParser:
     """Build the command-line argument parser."""
 
+    config = AppConfig()
+
     parser = argparse.ArgumentParser(
         description="GeneWeaver sequence analysis CLI"
     )
@@ -23,11 +25,29 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--target", required=True, help="Target DNA sequence")
     parser.add_argument(
         "--algorithm",
-        default="global",
+        default=config.default_algorithm,
         choices=["global", "local"],
-        help="Analysis algorithm (default: global)",
+        help="Analysis algorithm",
     )
     parser.add_argument("--request-id", help="Optional request identifier")
+    parser.add_argument(
+        "--match-score",
+        type=float,
+        default=None,
+        help="Score added for each matching base",
+    )
+    parser.add_argument(
+        "--mismatch-score",
+        type=float,
+        default=None,
+        help="Score added for each mismatching base",
+    )
+    parser.add_argument(
+        "--minimum-score",
+        type=float,
+        default=None,
+        help="Minimum weighted alignment score required",
+    )
 
     return parser
 
@@ -42,6 +62,9 @@ def main(argv=None) -> int:
         target_sequence=args.target,
         algorithm=args.algorithm,
         request_id=args.request_id,
+        match_score=args.match_score,
+        mismatch_score=args.mismatch_score,
+        minimum_score=args.minimum_score,
     )
 
     try:
@@ -50,6 +73,9 @@ def main(argv=None) -> int:
         result = match_guide_to_target(
             validated_request.guide_sequence,
             validated_request.target_sequence,
+            match_score=validated_request.match_score,
+            mismatch_score=validated_request.mismatch_score,
+            minimum_score=validated_request.minimum_score,
         )
 
         response = AnalysisResponse(
